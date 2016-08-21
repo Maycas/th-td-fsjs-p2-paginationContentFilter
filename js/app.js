@@ -76,6 +76,9 @@ var selectActive = function() {
 
 // Searches using the value from the input and returns the nodes to show
 var search = function() {
+    // Set the query to students, so a new search contains all the users
+    $searchQuery = $students;
+
     // Get the value from the input
     var searchInput = $(".student-search input").val().toLowerCase(); // Accepting upper and lowercase
 
@@ -87,7 +90,6 @@ var search = function() {
         // Get a reference from the student and its data
         var $student = $(this);
         var $studentData = $student.children();
-        //console.log($student);
 
         // Get the name of the student
         var name = $studentData.children("h3").text().toLowerCase(); // Accepting upper and lowercase
@@ -105,6 +107,21 @@ var search = function() {
     return $(results);
 };
 
+// Handler for the search events
+var searchEventHandler = function() {
+    // Perform a search
+    $searchQuery = search();
+
+    // Re-build pagination to contain the new selected elements
+    buildPagination($searchQuery);
+
+    // Show results on the first page
+    showResults(1);
+
+    // Trigger the first pagination link to show the first subset of elements
+    $(".pagination li a").on("click", goToPage).on("click", selectActive);
+    $(".pagination ul li").children().first().click();
+};
 
 /****************************
 APP WORKFLOW
@@ -121,21 +138,16 @@ $(".page").append($paginationPlaceholder);
 
 // Add Event handlers:
 // Pagination links - for student pagination and set active page
-$(".pagination li a").on("click", goToPage).on("click", selectActive);
-
+$(".pagination li").on("click", "a", goToPage).on("click", "a", selectActive);
 // Search button - to search for students
 $(".student-search button").click(function() {
     // Perform a search
-    $searchQuery = search();
-
-    // Re-build pagination to contain the new selected elements
-    buildPagination($searchQuery);
-    // Trigger the first pagination link to show the first 10 elements
-    $(".pagination ul li").children().first().click();
+    searchEventHandler();
 
     // Clear the field once clicking the button
-    //$(".student-search input").val("");
+    $(".student-search input").val("");
 });
+// 
 
 // Trigger the first pagination link to show the first 10 elements
 $(".pagination ul li").children().first().click();
