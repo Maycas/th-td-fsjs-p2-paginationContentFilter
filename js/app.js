@@ -2,10 +2,12 @@
 GLOBAL VARIABLES
 /***************************/
 
-var studentsPerPage = 10; // In case was required to show less students in the future
+var studentsPerPage = 10; // In case it was required to show less students in the future
 var $students = $(".student-list").children(); // List of students
 var $paginationPlaceholder = $("<div></div>").addClass("pagination"); // Placeholder to put the different pagination lists
 var $searchQuery = $students; // Variable to hold any search query done with the Search button
+var $noDataToDisplayMsg = $('<div class="no-data-message"><p><strong>Oh snap! </strong>Your query didn\'t return any result</p></div>').hide(); // No data to display message (Hidden by default)
+var typingTimer; // Timer to control when the user is typing too fast in the search bar
 
 
 /****************************
@@ -98,12 +100,11 @@ var search = function() {
         var email = $studentData.children(".email").text().toLowerCase(); // Accepting upper and lowercase
 
         // In case a name or an email coincidence was found, push the result to the results array
-        if (name.indexOf(searchInput) > -1 ||  email.indexOf(searchInput) > -1) {
+        if (name.indexOf(searchInput) > -1 || email.indexOf(searchInput) > -1) {
             results.push($student);
         }
     });
 
-    // Return a jquery array of nodes
     return $(results);
 };
 
@@ -112,6 +113,14 @@ var searchEventHandler = function() {
     // Perform a search
     $searchQuery = search();
 
+    // Control if there are no results in the searchQuery
+    if ($searchQuery.length === 0) {
+        // Show the no data to display message
+        $noDataToDisplayMsg.show();
+    } else {
+        // Hide the message
+        $noDataToDisplayMsg.hide();
+    }
     // Re-build pagination to contain the new selected elements
     buildPagination($searchQuery);
 
@@ -119,9 +128,9 @@ var searchEventHandler = function() {
     showResults(1);
 
     // Trigger the first pagination link to show the first subset of elements
-    $(".pagination li a").on("click", goToPage).on("click", selectActive);
     $(".pagination ul li").children().first().click();
 };
+
 
 /****************************
 APP WORKFLOW
@@ -134,38 +143,30 @@ buildPagination($students);
 $(".page-header").append('<div class="student-search"><input placeholder="Search for students..."><button>Search</button></div>');
 // Append the pagination placeholder to the .page div
 $(".page").append($paginationPlaceholder);
+// Add and hide the message placeholder
+$(".page").append($noDataToDisplayMsg);
 
 
-// Add Event handlers:
+// EVENT LISTENERS:
 // Pagination links - for student pagination and set active page
-$(".pagination li").on("click", "a", goToPage).on("click", "a", selectActive);
+$(".pagination").on("click", "li a", goToPage).on("click", "li a", selectActive);
 // Search button - to search for students
 $(".student-search button").click(function() {
     // Perform a search
     searchEventHandler();
-
     // Clear the field once clicking the button
     $(".student-search input").val("");
 });
-// 
+// Add a keyup event handler when typing a search
+// Implements a mechanism for when the user clicks very fast (the 500 ms has been decided after testing several times)
+$(".student-search input")
+    .on("keyup", function() {
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(searchEventHandler, 500);
+    }).on("keydown", function() {
+        clearTimeout(typingTimer);
+    });
 
-// Trigger the first pagination link to show the first 10 elements
+// EVENT TRIGGERING
+// Trigger the first pagination link to show the first 10 students
 $(".pagination ul li").children().first().click();
-
-
-//TEST
-
-/*
-$(".student-search input").val("in");
-$students.each(function() {
-    $(this).hide();
-});
-var $lookup = search();
-
-$lookup.each(function() {
-    console.log($(this));
-    $(this).show();
-});
-
-console.log($lookup);
-*/
