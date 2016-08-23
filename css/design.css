@@ -128,3 +128,7 @@ body {
   border: 1px solid transparent;
   border-radius: 4px;
 }
+
+strong {
+  font-weight: bold;
+}

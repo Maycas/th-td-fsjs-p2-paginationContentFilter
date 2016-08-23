@@ -6,7 +6,7 @@ var studentsPerPage = 10; // In case it was required to show less students in th
 var $students = $(".student-list").children(); // List of students
 var $paginationPlaceholder = $("<div></div>").addClass("pagination"); // Placeholder to put the different pagination lists
 var $searchQuery = $students; // Variable to hold any search query done with the Search button
-var $noDataToDisplayMsg = $('<div class="no-data-message"><p><strong>Oh snap! </strong>Your query didn\'t return any result</p></div>').hide(); // No data to display message (Hidden by default)
+var $noDataToDisplayMsg = $('<div class="no-data-message"><p><strong>Oh snap! </strong>Your query didn\'t return any result</p></div>'); // No data to display message
 var typingTimer; // Timer to control when the user is typing too fast in the search bar
 
 
@@ -21,22 +21,28 @@ var getNumberOfPages = function($setOfStudents) {
 
 // Build the lower page navigation with the number of pages determined before
 var buildPagination = function($setOfStudents) {
-    // Set the ul that will contain the links for pagination
-    var $ul = $("<ul></ul>");
-    // For each page create a different list item
-    var pages = getNumberOfPages($setOfStudents);
-    for (var i = 1; i <= pages; i++) {
-        // Create a list item element
-        var $li = $("<li></li>");
-        // Create an anchor element with href="#" and with the number of the page as text
-        var $a = $("<a></a>").attr("href", "#").text(i);
-        // Append the anchor element to the list item
-        $li.append($a);
-        // Append the list item to the ul
-        $ul.append($li);
+    // Only build the pagination if the there are more students in the set than the number of students per page
+    if ($setOfStudents.length > studentsPerPage) {
+        // Set the ul that will contain the links for pagination
+        var $ul = $("<ul></ul>");
+        // For each page create a different list item
+        var pages = getNumberOfPages($setOfStudents);
+        for (var i = 1; i <= pages; i++) {
+            // Create a list item element
+            var $li = $("<li></li>");
+            // Create an anchor element with href="#" and with the number of the page as text
+            var $a = $("<a></a>").attr("href", "#").text(i);
+            // Append the anchor element to the list item
+            $li.append($a);
+            // Append the list item to the ul
+            $ul.append($li);
+        }
+        // Append the list to the pagination placeholder
+        $paginationPlaceholder.html($ul);
+    } else {
+        // Fix case when there were pagination links and the set doesn't have enough students to build pagination
+        $paginationPlaceholder.html("");
     }
-    // Append the list to the pagination placeholder
-    $paginationPlaceholder.html($ul);
 };
 
 // Event handlers for pagination links
@@ -131,42 +137,51 @@ var searchEventHandler = function() {
     $(".pagination ul li").children().first().click();
 };
 
+// Function to create the basic layout of the page
+var layout = function() {
+    // Build Pagination
+    buildPagination($students);
+    // Build Student search bar
+    $(".page-header").append('<div class="student-search"><input placeholder="Search for students..."><button>Search</button></div>');
+    // Append the pagination placeholder to the .page div
+    $(".page").append($paginationPlaceholder);
+    // Add and hide the message placeholder
+    $noDataToDisplayMsg.hide();
+    $(".page").append($noDataToDisplayMsg);
+};
+
+// Function to register the different page listeners
+var registerListeners = function() {
+    // Pagination links - for student pagination and set active page
+    $(".pagination").on("click", "li a", goToPage).on("click", "li a", selectActive);
+    // Search button - to search for students
+    $(".student-search button").click(function() {
+        // Perform a search
+        searchEventHandler();
+        // Clear the field once clicking the button
+        $(".student-search input").val("");
+    });
+    // Add a keyup event handler when typing a search
+    // Implements a mechanism for when the user clicks very fast (the 500 ms has been decided after testing several times)
+    $(".student-search input")
+        .on("keyup", function() {
+            clearTimeout(typingTimer);
+            typingTimer = setTimeout(searchEventHandler, 500);
+        }).on("keydown", function() {
+            clearTimeout(typingTimer);
+        });
+
+    // Event triggering
+    // Trigger the first pagination link to show the first 10 students
+    $(".pagination ul li").children().first().click();
+};
 
 /****************************
 APP WORKFLOW
 ****************************/
 
 // PAGE LAYOUT:
-// Build Pagination
-buildPagination($students);
-// Build Student search bar
-$(".page-header").append('<div class="student-search"><input placeholder="Search for students..."><button>Search</button></div>');
-// Append the pagination placeholder to the .page div
-$(".page").append($paginationPlaceholder);
-// Add and hide the message placeholder
-$(".page").append($noDataToDisplayMsg);
-
+layout();
 
 // EVENT LISTENERS:
-// Pagination links - for student pagination and set active page
-$(".pagination").on("click", "li a", goToPage).on("click", "li a", selectActive);
-// Search button - to search for students
-$(".student-search button").click(function() {
-    // Perform a search
-    searchEventHandler();
-    // Clear the field once clicking the button
-    $(".student-search input").val("");
-});
-// Add a keyup event handler when typing a search
-// Implements a mechanism for when the user clicks very fast (the 500 ms has been decided after testing several times)
-$(".student-search input")
-    .on("keyup", function() {
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(searchEventHandler, 500);
-    }).on("keydown", function() {
-        clearTimeout(typingTimer);
-    });
-
-// EVENT TRIGGERING
-// Trigger the first pagination link to show the first 10 students
-$(".pagination ul li").children().first().click();
+registerListeners();
